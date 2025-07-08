@@ -41,8 +41,7 @@ public class Productservlet extends HttpServlet {
         }
 
         switch (action) {
-            case "list":
-            {
+            case "list": {
                 try {
                     listProducts(request, response);
                 } catch (SQLException ex) {
@@ -51,10 +50,9 @@ public class Productservlet extends HttpServlet {
                     Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-                break;
+            break;
 
-            case "detail":
-            {
+            case "detail": {
                 try {
                     showProductDetail(request, response);
                 } catch (SQLException ex) {
@@ -63,10 +61,9 @@ public class Productservlet extends HttpServlet {
                     Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-                break;
+            break;
 
-            case "category":
-            {
+            case "category": {
                 try {
                     listProductsByCategory(request, response);
                 } catch (SQLException ex) {
@@ -75,10 +72,9 @@ public class Productservlet extends HttpServlet {
                     Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-                break;
+            break;
 
-            case "search":
-            {
+            case "search": {
                 try {
                     searchProducts(request, response);
                 } catch (SQLException ex) {
@@ -87,25 +83,18 @@ public class Productservlet extends HttpServlet {
                     Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-                break;
+            break;
 
             default:
                 try {
-                    listProducts(request, response);
-                } catch (SQLException ex) {
-                    Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                break;
+                listProducts(request, response);
+            } catch (SQLException ex) {
+                Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            break;
         }
-    }
-
-    private void listProducts(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException, SQLException, ClassNotFoundException {
-        List<Product> products = productDAO.getAllProducts();
-        request.setAttribute("products", products);
-        request.getRequestDispatcher("/products.jsp").forward(request, response);
     }
 
     private void showProductDetail(HttpServletRequest request, HttpServletResponse response)
@@ -159,6 +148,26 @@ public class Productservlet extends HttpServlet {
         List<Product> products = productDAO.searchProducts(keyword);
         request.setAttribute("products", products);
         request.setAttribute("searchKeyword", keyword);
+        request.getRequestDispatcher("/products.jsp").forward(request, response);
+    }
+
+    private void listProducts(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SQLException, ClassNotFoundException {
+
+        int page = 1; // mặc định trang 1
+        int recordsPerPage = 12; // số sản phẩm/trang
+
+        if (request.getParameter("page") != null) {
+            page = Integer.parseInt(request.getParameter("page"));
+        }
+
+        List<Product> products = productDAO.getProducts((page - 1) * recordsPerPage, recordsPerPage);
+        int noOfRecords = productDAO.getTotalProducts();
+        int noOfPages = (int) Math.ceil(noOfRecords * 1.0 / recordsPerPage);
+
+        request.setAttribute("products", products);
+        request.setAttribute("noOfPages", noOfPages);
+        request.setAttribute("currentPage", page);
         request.getRequestDispatcher("/products.jsp").forward(request, response);
     }
 }

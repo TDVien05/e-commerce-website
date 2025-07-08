@@ -8,6 +8,39 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sản phẩm - BaloShop</title>
         <link rel="stylesheet" href="css/style.css">
+        <style>
+            .pagination {
+                margin-top: 2rem;
+                text-align: center;
+            }
+            .pagination a {
+                display: inline-block;
+                margin: 0 5px;
+                padding: 8px 12px;
+                background: #eee;
+                color: #333;
+                text-decoration: none;
+                border-radius: 4px;
+            }
+            .pagination a.active {
+                background: #007bff;
+                color: #fff;
+            }
+            .product-card {
+                width: 300px; /* hoặc linh hoạt % nếu responsive */
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                overflow: hidden;
+                background: #fff;
+            }
+
+            .product-image {
+                width: 100%;
+                height: 300px;   /* hoặc chiều cao bạn muốn */
+                object-fit: cover;  /* Ảnh tự căn đầy mà không méo */
+                display: block;
+            }
+        </style>
     </head>
     <body>
         <%@ include file="includes/header.jsp" %>
@@ -42,8 +75,7 @@
                                 <div class="product-card">
                                     <img src="images/${product.image}" alt="${product.name}"
                                          class="product-image" loading="lazy"
-                                         decoding="async"
-                                         width="300" height="300"
+                                         decoding="async" width="300" height="300"
                                          onerror="this.src='images/default-balo.jpg'">
                                     <div class="product-info">
                                         <h3 class="product-name">${product.name}</h3>
@@ -63,7 +95,9 @@
                                         </p>
                                         <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
                                             <a href="product?action=detail&id=${product.productId}" 
-                                               class="btn btn-primary" style="flex: 1; text-align: center;">Xem chi tiết</a>
+                                               class="btn btn-primary" style="flex: 1; text-align: center;">
+                                                Xem chi tiết
+                                            </a>
                                             <c:if test="${sessionScope.user != null && product.stock > 0}">
                                                 <form action="cart" method="post" style="flex: 1;">
                                                     <input type="hidden" name="action" value="add">
@@ -93,6 +127,16 @@
                                 </div>
                             </c:forEach>
                         </div>
+
+                        <c:if test="${noOfPages > 1}">
+                            <div class="pagination">
+                                <c:forEach begin="1" end="${noOfPages}" var="i">
+                                    <a href="product?page=${i}" class="${i == currentPage ? 'active' : ''}">
+                                        ${i}
+                                    </a>
+                                </c:forEach>
+                            </div>
+                        </c:if>
                     </c:otherwise>
                 </c:choose>
             </div>

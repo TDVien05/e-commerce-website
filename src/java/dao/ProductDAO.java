@@ -5,6 +5,7 @@ import util.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import static util.DatabaseConnection.getConnection;
 
 public class ProductDAO {
 
@@ -12,9 +13,7 @@ public class ProductDAO {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT * FROM products ORDER BY product_id";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql);  ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Product product = new Product();
@@ -36,8 +35,7 @@ public class ProductDAO {
 
     public Product getProductById(int productId) throws SQLException, ClassNotFoundException {
         String sql = "SELECT * FROM products WHERE product_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, productId);
             ResultSet rs = stmt.executeQuery();
@@ -64,8 +62,7 @@ public class ProductDAO {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE category = ? ORDER BY product_id";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, category);
             ResultSet rs = stmt.executeQuery();
@@ -92,8 +89,7 @@ public class ProductDAO {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ? ORDER BY product_id";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             String searchTerm = "%" + keyword + "%";
             stmt.setString(1, searchTerm);
@@ -120,8 +116,7 @@ public class ProductDAO {
 
     public boolean updateStock(int productId, int newStock) throws SQLException, ClassNotFoundException {
         String sql = "UPDATE products SET stock = ? WHERE product_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, newStock);
             stmt.setInt(2, productId);
@@ -132,4 +127,38 @@ public class ProductDAO {
             return false;
         }
     }
+
+    public List<Product> getProducts(int offset, int limit) throws SQLException, ClassNotFoundException {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT * FROM products LIMIT ? OFFSET ?";
+        try ( Connection conn = getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            stmt.setInt(2, offset);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                // map result -> Product
+                Product product = new Product();
+                product.setProductId(rs.getInt("product_id"));
+                product.setName(rs.getString("name"));
+                product.setDescription(rs.getString("description"));
+                product.setPrice(rs.getDouble("price"));
+                product.setStock(rs.getInt("stock"));
+                product.setImage(rs.getString("image"));
+                products.add(product);
+            }
+        }
+        return products;
+    }
+
+    public int getTotalProducts() throws SQLException, ClassNotFoundException {
+        String sql = "SELECT COUNT(*) FROM products";
+        try ( Connection conn = getConnection();  Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
 }
