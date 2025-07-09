@@ -154,20 +154,10 @@ public class Productservlet extends HttpServlet {
     private void listProducts(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException, ClassNotFoundException {
 
-        int page = 1; // mặc định trang 1
-        int recordsPerPage = 12; // số sản phẩm/trang
-
-        if (request.getParameter("page") != null) {
-            page = Integer.parseInt(request.getParameter("page"));
-        }
-
-        List<Product> products = productDAO.getProducts((page - 1) * recordsPerPage, recordsPerPage);
-        int noOfRecords = productDAO.getTotalProducts();
-        int noOfPages = (int) Math.ceil(noOfRecords * 1.0 / recordsPerPage);
+        List<Product> products = productDAO.getAllProducts(); // Lấy tất cả sản phẩm
 
         request.setAttribute("products", products);
-        request.setAttribute("noOfPages", noOfPages);
-        request.setAttribute("currentPage", page);
+
         request.getRequestDispatcher("/products.jsp").forward(request, response);
     }
 }

@@ -128,15 +128,7 @@
                             </c:forEach>
                         </div>
 
-                        <c:if test="${noOfPages > 1}">
-                            <div class="pagination">
-                                <c:forEach begin="1" end="${noOfPages}" var="i">
-                                    <a href="product?page=${i}" class="${i == currentPage ? 'active' : ''}">
-                                        ${i}
-                                    </a>
-                                </c:forEach>
-                            </div>
-                        </c:if>
+
                     </c:otherwise>
                 </c:choose>
             </div>
