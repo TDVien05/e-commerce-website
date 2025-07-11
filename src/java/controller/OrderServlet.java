@@ -29,70 +29,38 @@ public class OrderServlet extends HttpServlet {
 
     private OrderDAO orderDAO;
     private CartDAO cartDAO;
-    private ProductDAO productDAO;
 
     @Override
     public void init() throws ServletException {
         orderDAO = new OrderDAO();
         cartDAO = new CartDAO();
-        productDAO = new ProductDAO();
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-
         if (action == null) {
             action = "list";
         }
 
-        switch (action) {
-            case "list":
-            {
-                try {
+        try {
+            switch (action) {
+                case "list":
                     listOrders(request, response);
-                } catch (SQLException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-                break;
-
-            case "detail":
-            {
-                try {
+                    break;
+                case "detail":
                     showOrderDetail(request, response);
-                } catch (SQLException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-                break;
-
-            case "checkout":
-            {
-                try {
+                    break;
+                case "checkout":
                     showCheckout(request, response);
-                } catch (SQLException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-                break;
-
-            default:
-                try {
+                    break;
+                default:
                     listOrders(request, response);
-                } catch (SQLException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                break;
+            }
+        } catch (SQLException | ClassNotFoundException ex) {
+            Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi hệ thống");
         }
     }
 
@@ -100,28 +68,15 @@ public class OrderServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-
-        if (action == null) {
-            response.sendRedirect("order");
-            return;
-        }
-
-        switch (action) {
-            case "place":
-            {
-                try {
-                    placeOrder(request, response);
-                } catch (SQLException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        if ("place".equals(action)) {
+            try {
+                placeOrder(request, response);
+            } catch (SQLException | ClassNotFoundException ex) {
+                Logger.getLogger(OrderServlet.class.getName()).log(Level.SEVERE, null, ex);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi hệ thống");
             }
-                break;
-
-            default:
-                response.sendRedirect("order");
-                break;
+        } else {
+            response.sendRedirect("order");
         }
     }
 
@@ -135,7 +90,6 @@ public class OrderServlet extends HttpServlet {
 
         User user = (User) session.getAttribute("user");
         List<Order> orders = orderDAO.getOrdersByUserId(user.getUserId());
-
         request.setAttribute("orders", orders);
         request.getRequestDispatcher("/orders.jsp").forward(request, response);
     }
@@ -149,7 +103,6 @@ public class OrderServlet extends HttpServlet {
         }
 
         String orderIdStr = request.getParameter("id");
-
         if (orderIdStr == null) {
             response.sendRedirect("order");
             return;
@@ -158,20 +111,15 @@ public class OrderServlet extends HttpServlet {
         try {
             int orderId = Integer.parseInt(orderIdStr);
             Order order = orderDAO.getOrderById(orderId);
-            List<OrderItem> orderItems = orderDAO.getOrderItems(orderId);
-
-            if (order != null) {
-                User user = (User) session.getAttribute("user");
-                // Check if order belongs to current user
-                if (order.getUserId() == user.getUserId()) {
-                    request.setAttribute("order", order);
-                    request.setAttribute("orderItems", orderItems);
-                    request.getRequestDispatcher("/order-detail.jsp").forward(request, response);
-                    return;
-                }
+            List<?> orderItems = orderDAO.getOrderItems(orderId);
+            User user = (User) session.getAttribute("user");
+            if (order != null && order.getUserId() == user.getUserId()) {
+                request.setAttribute("order", order);
+                request.setAttribute("orderItems", orderItems);
+                request.getRequestDispatcher("/order-detail.jsp").forward(request, response);
+            } else {
+                response.sendRedirect("order");
             }
-
-            response.sendRedirect("order");
         } catch (NumberFormatException e) {
             response.sendRedirect("order");
         }
@@ -187,14 +135,12 @@ public class OrderServlet extends HttpServlet {
 
         User user = (User) session.getAttribute("user");
         List<CartItem> cartItems = cartDAO.getCartItems(user.getUserId());
-
         if (cartItems.isEmpty()) {
             response.sendRedirect("cart");
             return;
         }
 
         double totalAmount = cartDAO.getCartTotal(user.getUserId());
-
         request.setAttribute("cartItems", cartItems);
         request.setAttribute("totalAmount", totalAmount);
         request.getRequestDispatcher("/checkout.jsp").forward(request, response);
@@ -210,7 +156,6 @@ public class OrderServlet extends HttpServlet {
 
         String shippingAddress = request.getParameter("shippingAddress");
         String paymentMethod = request.getParameter("paymentMethod");
-
         if (shippingAddress == null || shippingAddress.trim().isEmpty()
                 || paymentMethod == null || paymentMethod.trim().isEmpty()) {
             request.setAttribute("error", "Vui lòng nhập đầy đủ thông tin");
@@ -220,46 +165,20 @@ public class OrderServlet extends HttpServlet {
 
         User user = (User) session.getAttribute("user");
         List<CartItem> cartItems = cartDAO.getCartItems(user.getUserId());
-
         if (cartItems.isEmpty()) {
             response.sendRedirect("cart");
             return;
         }
 
         double totalAmount = cartDAO.getCartTotal(user.getUserId());
-
-        // Create order
         Order order = new Order(user.getUserId(), totalAmount, shippingAddress, paymentMethod);
-        int orderId = orderDAO.createOrder(order);
 
+        int orderId = orderDAO.createOrderAtomic(order, cartItems);
         if (orderId > 0) {
-            // Add order items and update product stock
-            boolean success = true;
-            for (CartItem cartItem : cartItems) {
-                OrderItem orderItem = new OrderItem(orderId, cartItem.getProductId(),
-                        cartItem.getQuantity(), cartItem.getProduct().getPrice());
-
-                if (!orderDAO.addOrderItem(orderItem)) {
-                    success = false;
-                    break;
-                }
-
-                // Update product stock
-                Product product = cartItem.getProduct();
-                int newStock = product.getStock() - cartItem.getQuantity();
-                productDAO.updateStock(product.getProductId(), newStock);
-            }
-
-            if (success) {
-                // Clear cart
-                cartDAO.clearCart(user.getUserId());
-                response.sendRedirect("order?action=detail&id=" + orderId);
-            } else {
-                request.setAttribute("error", "Có lỗi xảy ra khi đặt hàng");
-                showCheckout(request, response);
-            }
+            cartDAO.clearCart(user.getUserId());
+            response.sendRedirect("order?action=detail&id=" + orderId);
         } else {
-            request.setAttribute("error", "Có lỗi xảy ra khi đặt hàng");
+            request.setAttribute("error", "Một số sản phẩm không đủ hàng hoặc lỗi hệ thống. Vui lòng thử lại.");
             showCheckout(request, response);
         }
     }

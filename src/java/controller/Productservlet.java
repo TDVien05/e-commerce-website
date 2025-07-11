@@ -4,23 +4,33 @@
  */
 package controller;
 
-import dao.ProductDAO;
-import model.Product;
+import java.io.IOException;
+import java.util.List;
+
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import jakarta.servlet.http.Part;
+
+import dao.ProductDAO;
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.Product;
 
 /**
  *
  * @author vient
  */
+@MultipartConfig
 @WebServlet(name = "Productservlet", urlPatterns = {"/product"})
 public class Productservlet extends HttpServlet {
 
@@ -29,6 +39,39 @@ public class Productservlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         productDAO = new ProductDAO();
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String action = request.getParameter("action");
+
+        if (action == null) {
+            action = "add";
+        }
+
+        switch (action) {
+
+            case "add": {
+                addProduct(request, response);
+                break;
+            }
+            case "edit": {
+                updateProduct(request, response);
+                break;
+            }
+
+            case "delete": {
+                try {
+                    deleteProduct(request, response);
+                } catch (SQLException ex) {
+                    Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(Productservlet.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                break;
+            }
+
+        }
     }
 
     @Override
@@ -95,6 +138,167 @@ public class Productservlet extends HttpServlet {
             }
             break;
         }
+    }
+
+    private void deleteProduct(HttpServletRequest request, HttpServletResponse response) throws IOException, SQLException, ClassNotFoundException {
+        String id = request.getParameter("productId");
+        boolean check = productDAO.delete(id);
+        if (check) {
+            request.getSession().setAttribute("successMessage", "Xoá sản phẩm thành công!");
+        } else {
+            request.getSession().setAttribute("errorMessage", "Có lỗi xảy ra khi xóa sản phẩm!");
+        }
+        response.sendRedirect("admin-product.jsp");
+    }
+
+    private void updateProduct(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            // Get form parameters
+            int productId = Integer.parseInt(request.getParameter("productId"));
+            String name = request.getParameter("name");
+            double price = Double.parseDouble(request.getParameter("price"));
+            int stock = Integer.parseInt(request.getParameter("stock"));
+            String description = request.getParameter("description");
+            String category = request.getParameter("category");
+            String brand = request.getParameter("brand");
+
+            // Get existing product
+            Product product = productDAO.getProductById(productId);
+            if (product == null) {
+                request.setAttribute("errorMessage", "Không tìm thấy sản phẩm!");
+                response.sendRedirect("admin-products.jsp");
+                return;
+            }
+
+            // Handle file upload
+            Part imagePart = request.getPart("image");
+            String imageName = product.getImage(); // Keep existing image by default
+
+            if (imagePart != null && imagePart.getSize() > 0) {
+                String fileName = getFileName(imagePart);
+                if (fileName != null && !fileName.isEmpty()) {
+                    imageName = System.currentTimeMillis() + "_" + fileName;
+                    String uploadPath = getServletContext().getRealPath("/images");
+                    imagePart.write(uploadPath + "/" + imageName);
+                }
+            }
+
+            // Update product object
+            product.setName(name);
+            product.setPrice(price);
+            product.setStock(stock);
+            product.setDescription(description);
+            product.setCategory(category);
+            product.setImage(imageName);
+            product.setBrand(brand);
+
+            // Update in database
+            boolean success = productDAO.updateProduct(product);
+
+            if (success) {
+                request.setAttribute("successMessage", "Cập nhật sản phẩm thành công!");
+            } else {
+                request.setAttribute("errorMessage", "Có lỗi xảy ra khi cập nhật sản phẩm!");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+
+        response.sendRedirect("admin-product.jsp");
+    }
+
+    private String generateImageUrl(String url) {
+        String uuid = UUID.randomUUID().toString();
+
+        // Lấy đuôi file (.jpg, .png, ...)
+        String extension = "";
+        int dotIndex = url.lastIndexOf('.');
+        if (dotIndex >= 0 && dotIndex < url.length() - 1) {
+            extension = url.substring(dotIndex);
+        }
+
+        return uuid + extension;
+    }
+
+    private void addProduct(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        try {
+            String name = request.getParameter("name");
+            double price = Double.parseDouble(request.getParameter("price"));
+            int stock = Integer.parseInt(request.getParameter("stock"));
+            String description = request.getParameter("description");
+            String category = request.getParameter("category");
+            String brand = request.getParameter("brand");
+
+            String imageName = "default-balo.jpg";
+            Part imagePart = request.getPart("image");
+
+            if (imagePart != null && imagePart.getSize() > 0) {
+                String fileName = getFileName(imagePart);
+                if (fileName != null && !fileName.isEmpty()) {
+                    imageName = generateImageUrl(fileName);
+
+                    // Thư mục lưu ngoài project
+                    String targetPath = "D:/MyUploads/ProductImages";
+                    File targetDir = new File(targetPath);
+                    if (!targetDir.exists()) {
+                        targetDir.mkdirs();
+                    }
+
+                    // Ghi file ra thư mục ngoài
+                    try ( InputStream input = imagePart.getInputStream()) {
+                        Files.copy(input,
+                                new File(targetDir, imageName).toPath(),
+                                StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
+
+            Product product = new Product();
+            product.setName(name);
+            product.setPrice(price);
+            product.setStock(stock);
+            product.setDescription(description);
+            product.setCategory(category);
+            product.setImage(imageName);
+            product.setBrand(brand);
+
+            log("name: " + name);
+            log("price: " + price);
+            log("stock: " + stock);
+            log("desc: " + description);
+            log("category: " + category);
+            log("image: " + imageName);
+            log("brand: " + brand);
+
+            boolean success = productDAO.addProduct(product);
+
+            if (success) {
+                request.getSession().setAttribute("successMessage", "Thêm sản phẩm thành công!");
+            } else {
+                request.getSession().setAttribute("errorMessage", "Có lỗi xảy ra khi thêm sản phẩm!");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.getSession().setAttribute("errorMessage", "Lỗi: " + e.getMessage());
+        }
+
+        response.sendRedirect("admin-product.jsp");
+    }
+
+    private String getFileName(Part part) {
+        String contentDisp = part.getHeader("content-disposition");
+        for (String cd : contentDisp.split(";")) {
+            if (cd.trim().startsWith("filename")) {
+                return cd.substring(cd.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
     }
 
     private void showProductDetail(HttpServletRequest request, HttpServletResponse response)

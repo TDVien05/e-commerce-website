@@ -13,6 +13,7 @@
 </head>
 <body>
     <%@ include file="includes/header.jsp" %>
+
     
     <!-- Hero Section -->
     <section class="hero">

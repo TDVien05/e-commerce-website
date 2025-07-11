@@ -5,8 +5,20 @@ import util.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import util.PasswordUtil;
 
 public class UserDAO {
+    public boolean delete(String id) throws SQLException, ClassNotFoundException {
+        String sql = " DELETE FROM users WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     public boolean createUser(User user) throws SQLException, ClassNotFoundException {
         String sql = "INSERT INTO users (username, password, email, full_name, phone, address, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -14,7 +26,7 @@ public class UserDAO {
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPassword());
+            stmt.setString(2, PasswordUtil.encodeString(user.getPassword()));
             stmt.setString(3, user.getEmail());
             stmt.setString(4, user.getFullName());
             stmt.setString(5, user.getPhone());
@@ -34,13 +46,13 @@ public class UserDAO {
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
-            stmt.setString(2, password);
+            stmt.setString(2, PasswordUtil.encodeString(password));
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 User user = new User();
                 user.setUserId(rs.getInt("user_id"));
-                user.setUsername(rs.getString("username"));
+                user.setUsername(PasswordUtil.decodeString(rs.getString("username")));
                 user.setPassword(rs.getString("password"));
                 user.setEmail(rs.getString("email"));
                 user.setFullName(rs.getString("full_name"));

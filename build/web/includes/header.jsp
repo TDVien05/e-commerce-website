@@ -1,27 +1,113 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- CSS Profile Form ĐẸP -->
+<style>
+    #profileForm {
+        display: none;
+        position: absolute;
+        right: 20px;
+        top: 80px;
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        padding: 20px;
+        width: 320px;
+        z-index: 999;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #profileForm h3 {
+        margin: 0 0 15px 0;
+        font-size: 20px;
+        text-align: center;
+        color: #333;
+    }
+    #profileForm label {
+        display: block;
+        font-weight: 600;
+        margin: 8px 0 4px;
+        font-size: 14px;
+        color: #555;
+    }
+    #profileForm input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+        background: #f9f9f9;
+    }
+    #profileForm input:read-only {
+        background: #f1f1f1;
+    }
+    #profileForm .btn-group {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+    #profileForm .btn-group button {
+        flex: 1;
+        text-align: center;
+        padding: 10px 12px;
+        margin: 0 5px;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    #profileForm .btn-close {
+        background: #555;
+        color: #fff;
+    }
+    #profileForm .btn-close:hover {
+        background: #333;
+    }
+    #profileForm .btn-delete {
+        background: #e74c3c;
+        color: #fff;
+    }
+    #profileForm .btn-delete:hover {
+        background: #c0392b;
+    }
+    #profileForm .message {
+        display: block;
+        margin-top: 10px;
+        color: red;
+        font-weight: bold;
+        text-align: center;
+    }
+</style>
+
 <header class="header">
     <div class="container">
         <div class="header-content">
             <div class="logo">
                 <h1><a href="index.jsp" style="color: white; text-decoration: none;">BaloShop</a></h1>
             </div>
-            
+
             <nav class="nav">
                 <ul>
                     <li><a href="index.jsp">Trang chủ</a></li>
                     <li><a href="product">Sản phẩm</a></li>
-                    <c:if test="${sessionScope.user != null}">
+                        <c:if test="${sessionScope.user != null}">
                         <li><a href="cart">Giỏ hàng</a></li>
                         <li><a href="order">Đơn hàng</a></li>
-                    </c:if>
+                        </c:if>
                 </ul>
             </nav>
-            
+
             <div class="user-info">
                 <c:choose>
                     <c:when test="${sessionScope.user != null}">
                         <span>Xin chào, ${sessionScope.user.fullName}!</span>
+                        <a href="#" id="profileIcon" style="margin-left: 10px; color: white;">
+                            <i class="fas fa-user-circle fa-2x"></i>
+                        </a>
                         <a href="user?action=logout" class="btn btn-warning">Đăng xuất</a>
                     </c:when>
                     <c:otherwise>
@@ -64,3 +150,48 @@
         </div>
     </div>
 </div>
+
+<!-- Profile Form -->
+<c:if test="${sessionScope.user != null}">
+    <div id="profileForm">
+        <h3>Thông tin tài khoản</h3>
+        <form method="get" action="user" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản không?');">
+            <label>Email:</label>
+            <input type="text" value="${sessionScope.user.email}" readonly>
+
+            <label>Họ tên:</label>
+            <input type="text" value="${sessionScope.user.fullName}" readonly>
+
+            <label>SĐT:</label>
+            <input type="text" value="${sessionScope.user.phone}" readonly>
+
+            <label>Địa chỉ:</label>
+            <input type="text" value="${sessionScope.user.address}" readonly>
+
+            <label>Role:</label>
+            <input type="text" value="${sessionScope.user.role}" readonly>
+
+            <!-- Hidden input cho action & id -->
+            <input type="hidden" name="action" value="deleteAccount">
+            <input type="hidden" name="id" value="${sessionScope.user.userId}">
+
+            <div class="btn-group">
+                <button type="button" class="btn-close" onclick="document.getElementById('profileForm').style.display = 'none'">Đóng</button>
+                <button type="submit" class="btn-delete">Xóa tài khoản</button>
+            </div>
+            <span class="message">${requestScope.MESSAGE}</span>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('profileIcon').addEventListener('click', function (event) {
+            event.preventDefault();
+            var form = document.getElementById('profileForm');
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+            } else {
+                form.style.display = 'none';
+            }
+        });
+    </script>
+</c:if>

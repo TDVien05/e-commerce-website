@@ -3,9 +3,27 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/BamaFolder/Bama/src/java/controller/Productservlet.java</file>
+            <file>file:/D:/BamaFolder/Bama/web/login.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/web/admin-product.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/web/order-detail.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/controller/AdminProductServlet.java</file>
+            <file>file:/D:/BamaFolder/Bama/web/cart.jsp</file>
             <file>file:/D:/BamaFolder/Bama/src/java/controller/UserServlet.java</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/controller/Productservlet.java</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/util/PasswordUtil.java</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/model/User.java</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/dao/UserDAO.java</file>
+            <file>file:/D:/BamaFolder/Bama/web/checkout.jsp</file>
             <file>file:/D:/BamaFolder/Bama/src/java/dao/ProductDAO.java</file>
+            <file>file:/D:/BamaFolder/Bama/web/register.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/web/index.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/model/Product.java</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/controller/ImageServlet.java</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/controller/OrderServlet.java</file>
+            <file>file:/D:/BamaFolder/Bama/web/product-detail.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/web/orders.jsp</file>
+            <file>file:/D:/BamaFolder/Bama/src/java/dao/OrderDAO.java</file>
+            <file>file:/D:/BamaFolder/Bama/web/includes/header.jsp</file>
             <file>file:/D:/BamaFolder/Bama/web/images/README.txt</file>
             <file>file:/D:/BamaFolder/Bama/web/products.jsp</file>
         </group>

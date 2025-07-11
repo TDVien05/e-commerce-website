@@ -53,9 +53,32 @@ public class UserServlet extends HttpServlet {
             case "profile":
                 showProfile(request, response);
                 break;
+
+            case "deleteAccount": {
+            try {
+                deleteAccount(request, response);
+            } catch (SQLException ex) {
+                Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+                break;
+            }
             default:
                 response.sendRedirect("index.jsp");
                 break;
+        }
+    }
+    
+    private void deleteAccount(HttpServletRequest request, HttpServletResponse response) throws SQLException, ClassNotFoundException, IOException, ServletException {
+        boolean check = userDAO.delete(request.getParameter("id"));
+        if(check) {
+            HttpSession session = request.getSession();
+            session.invalidate();
+            response.sendRedirect("login.jsp");
+        } else {
+            request.setAttribute("MESSAGE", "CAN NOT DELETE THIS ACCOUNT");
+            request.getRequestDispatcher("index.jsp").forward(request, response);
         }
     }
 
@@ -70,8 +93,7 @@ public class UserServlet extends HttpServlet {
         }
 
         switch (action) {
-            case "login":
-            {
+            case "login": {
                 try {
                     handleLogin(request, response);
                 } catch (SQLException ex) {
@@ -80,10 +102,9 @@ public class UserServlet extends HttpServlet {
                     Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-                break;
+            break;
 
-            case "register":
-            {
+            case "register": {
                 try {
                     handleRegister(request, response);
                 } catch (SQLException ex) {
@@ -92,7 +113,7 @@ public class UserServlet extends HttpServlet {
                     Logger.getLogger(UserServlet.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-                break;
+            break;
 
             default:
                 response.sendRedirect("index.jsp");
@@ -116,7 +137,11 @@ public class UserServlet extends HttpServlet {
         if (user != null) {
             HttpSession session = request.getSession();
             session.setAttribute("user", user);
-            response.sendRedirect("index.jsp");
+            if (user.getRole().equalsIgnoreCase("admin")) {
+                response.sendRedirect("admin-product.jsp");
+            } else {
+                response.sendRedirect("index.jsp");
+            }
         } else {
             request.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng");
             request.getRequestDispatcher("/login.jsp").forward(request, response);

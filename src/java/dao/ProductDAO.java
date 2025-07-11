@@ -9,6 +9,43 @@ import static util.DatabaseConnection.getConnection;
 
 public class ProductDAO {
 
+    public boolean addProduct(Product product) throws SQLException, ClassNotFoundException {
+        String sql = "INSERT INTO products (name, description, price, stock, image, category, brand) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, product.getName());
+            stmt.setString(2, product.getDescription());
+            stmt.setDouble(3, product.getPrice());
+            stmt.setInt(4, product.getStock());
+            stmt.setString(5, product.getImage());
+            stmt.setString(6, product.getCategory());
+            stmt.setString(7, product.getBrand());
+
+            int row = stmt.executeUpdate();
+            if (row > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+     public boolean delete(String id) throws SQLException, ClassNotFoundException {
+        String sql = "DELETE FROM products WHERE product_id = ?";
+
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, id);
+           
+            int row = stmt.executeUpdate();
+            if (row > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public List<Product> getAllProducts() throws SQLException, ClassNotFoundException {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT * FROM products ORDER BY product_id";
@@ -159,6 +196,33 @@ public class ProductDAO {
             }
         }
         return 0;
+    }
+
+    public boolean updateProduct(Product product) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE products SET "
+                + "name = ?, "
+                + "description = ?, "
+                + "price = ?, "
+                + "stock = ?, "
+                + "image = ?, "
+                + "category = ?, "
+                + "brand = ? "
+                + "WHERE id = ?";
+
+        try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, product.getName());
+            stmt.setString(2, product.getDescription());
+            stmt.setDouble(3, product.getPrice());
+            stmt.setInt(4, product.getStock());
+            stmt.setString(5, product.getImage());
+            stmt.setString(6, product.getCategory());
+            stmt.setString(7, product.getBrand());
+            stmt.setInt(8, product.getProductId()); // ID ở cuối!
+
+            int rows = stmt.executeUpdate();
+            return rows > 0;
+        }
     }
 
 }
