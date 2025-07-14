@@ -142,7 +142,7 @@ public class Productservlet extends HttpServlet {
 
     private void deleteProduct(HttpServletRequest request, HttpServletResponse response) throws IOException, SQLException, ClassNotFoundException {
         String id = request.getParameter("productId");
-        boolean check = productDAO.delete(id);
+        boolean check = productDAO.delete(id, "inactive");
         if (check) {
             request.getSession().setAttribute("successMessage", "Xoá sản phẩm thành công!");
         } else {
@@ -154,7 +154,7 @@ public class Productservlet extends HttpServlet {
     private void updateProduct(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            // Get form parameters
+            // Lấy dữ liệu form
             int productId = Integer.parseInt(request.getParameter("productId"));
             String name = request.getParameter("name");
             double price = Double.parseDouble(request.getParameter("price"));
@@ -163,37 +163,49 @@ public class Productservlet extends HttpServlet {
             String category = request.getParameter("category");
             String brand = request.getParameter("brand");
 
-            // Get existing product
+            // Lấy sản phẩm từ DB
             Product product = productDAO.getProductById(productId);
             if (product == null) {
-                request.setAttribute("errorMessage", "Không tìm thấy sản phẩm!");
+                request.getSession().setAttribute("errorMessage", "Không tìm thấy sản phẩm!");
                 response.sendRedirect("admin-products.jsp");
                 return;
             }
 
-            // Handle file upload
+            // Xử lý file ảnh (nếu có upload mới)
             Part imagePart = request.getPart("image");
-            String imageName = product.getImage(); // Keep existing image by default
-
             if (imagePart != null && imagePart.getSize() > 0) {
                 String fileName = getFileName(imagePart);
                 if (fileName != null && !fileName.isEmpty()) {
-                    imageName = System.currentTimeMillis() + "_" + fileName;
-                    String uploadPath = getServletContext().getRealPath("/images");
-                    imagePart.write(uploadPath + "/" + imageName);
+                    String imageName = generateImageUrl(fileName);
+
+                    // Thư mục lưu ngoài project
+                    String targetPath = "D:/MyUploads/ProductImages";
+                    File targetDir = new File(targetPath);
+                    if (!targetDir.exists()) {
+                        targetDir.mkdirs();
+                    }
+
+                    // Ghi file ra thư mục ngoài
+                    try ( InputStream input = imagePart.getInputStream()) {
+                        Files.copy(input,
+                                new File(targetDir, imageName).toPath(),
+                                StandardCopyOption.REPLACE_EXISTING);
+                    }
+
+                    // Cập nhật tên ảnh mới
+                    product.setImage(imageName);
                 }
             }
 
-            // Update product object
+            // Luôn cập nhật các field khác (dù có upload file mới hay không)
             product.setName(name);
             product.setPrice(price);
             product.setStock(stock);
             product.setDescription(description);
             product.setCategory(category);
-            product.setImage(imageName);
             product.setBrand(brand);
 
-            // Update in database
+            // Update DB
             boolean success = productDAO.updateProduct(product);
 
             if (success) {
@@ -204,9 +216,10 @@ public class Productservlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Lỗi: " + e.getMessage());
+            request.getSession().setAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
 
+        // Redirect
         response.sendRedirect("admin-product.jsp");
     }
 

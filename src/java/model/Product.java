@@ -9,8 +9,10 @@ public class Product {
     private String image;
     private String category;
     private String brand;
+    private String status;
 
     public Product() {
+        this.status = "active";
     }
 
     public Product(String name, String description, double price, int stock, String image, String category,
@@ -22,6 +24,7 @@ public class Product {
         this.image = image;
         this.category = category;
         this.brand = brand;
+        this.status = "active";
     }
 
     // Getters and Setters
@@ -32,6 +35,16 @@ public class Product {
     public void setProductId(int productId) {
         this.productId = productId;
     }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    
+    
 
     public String getName() {
         return name;

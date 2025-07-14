@@ -10,8 +10,8 @@ import static util.DatabaseConnection.getConnection;
 public class ProductDAO {
 
     public boolean addProduct(Product product) throws SQLException, ClassNotFoundException {
-        String sql = "INSERT INTO products (name, description, price, stock, image, category, brand) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO products (name, description, price, stock, image, category, brand, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -22,6 +22,7 @@ public class ProductDAO {
             stmt.setString(5, product.getImage());
             stmt.setString(6, product.getCategory());
             stmt.setString(7, product.getBrand());
+            stmt.setString(8, product.getStatus());
 
             int row = stmt.executeUpdate();
             if (row > 0) {
@@ -30,14 +31,15 @@ public class ProductDAO {
         }
         return false;
     }
-    
-     public boolean delete(String id) throws SQLException, ClassNotFoundException {
-        String sql = "DELETE FROM products WHERE product_id = ?";
+
+    public boolean delete(String id, String status) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE products SET status = ? WHERE product_id = ?";
 
         try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, id);
-           
+            stmt.setString(1, status);
+            stmt.setString(2, id);
+
             int row = stmt.executeUpdate();
             if (row > 0) {
                 return true;
@@ -62,7 +64,10 @@ public class ProductDAO {
                 product.setImage(rs.getString("image"));
                 product.setCategory(rs.getString("category"));
                 product.setBrand(rs.getString("brand"));
-                products.add(product);
+                String status = rs.getString("status");
+                if (status.equalsIgnoreCase("active")) {
+                    products.add(product);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -207,7 +212,7 @@ public class ProductDAO {
                 + "image = ?, "
                 + "category = ?, "
                 + "brand = ? "
-                + "WHERE id = ?";
+                + "WHERE product_id = ?";
 
         try ( Connection conn = DatabaseConnection.getConnection();  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
